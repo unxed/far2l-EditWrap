@@ -1,9 +1,35 @@
-﻿
+﻿#include "../../etc/plugs.h"
+
+/*
 #include <Windows.h>
 #include <crtdbg.h>
 #include <tchar.h>
 #include "../../common/plugin.h"
 #include "../../common/FarHelper.h"
+*/
+
+#define min(a,b) \
+   ({ __typeof__ (a) _a = (a); \
+       __typeof__ (b) _b = (b); \
+     _a < _b ? _a : _b; })
+
+//#include "FarHelper.h"
+#define FADV1988
+#define FARSTRUCTSIZE(s) sizeof(s)
+#define FAR_PANEL_NONE NULL
+extern struct PluginStartupInfo psi;
+
+inline INT_PTR EditCtrl(int Cmd, void* Parm, INT_PTR cbSize = 0)
+{
+	INT_PTR iRc;
+	#if FAR_UNICODE>=1906
+	iRc = psi.EditorControl(-1, (EDITOR_CONTROL_COMMANDS)Cmd, cbSize, Parm);
+	#else
+	iRc = psi.EditorControl(Cmd, Parm);
+	#endif
+	return iRc;
+}
+
 
 #if FAR_UNICODE>=2184
 
@@ -31,9 +57,13 @@
 		{0xb9, 0x0e, 0x71, 0x14, 0xa3, 0x34, 0x32, 0xf5}
 	};
 
+    #define PluginNumber &guid_PluginGuid
+#else
+    #define PluginNumber psi.ModuleNumber
 #endif
 
-#include "version.h"
+
+// #include "version.h"
 
 struct PluginStartupInfo psi;
 struct FarStandardFunctions FSF;
@@ -65,15 +95,17 @@ HMODULE ghInstance=NULL;
 		};
 	};
 #else
+    /*
 	BOOL APIENTRY DllMain(HANDLE hModule,DWORD dwReason,LPVOID lpReserved)
 	{
 	    if (ghInstance==NULL)
 	        ghInstance = (HMODULE)hModule;
 	    return TRUE;
 	}
+    */
 #endif
 
-int WINAPI GetMinFarVersionW(void)
+SHAREDSYMBOL int WINAPI GetMinFarVersionW(void)
 {
 	#if FAR_UNICODE>=2184
 	#define MAKEFARVERSION2(major,minor,build) ( ((major)<<8) | (minor) | ((build)<<16))
@@ -84,7 +116,7 @@ int WINAPI GetMinFarVersionW(void)
 }
 
 #if FAR_UNICODE>=1906
-	void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
+	SHAREDSYMBOL void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
 	{
 		//static wchar_t szTitle[16]; _wcscpy_c(szTitle, L"ConEmu");
 		//static wchar_t szDescr[64]; _wcscpy_c(szTitle, L"ConEmu support for Far Manager");
@@ -104,7 +136,7 @@ int WINAPI GetMinFarVersionW(void)
 	}
 #endif
 
-void WINAPI GetPluginInfoW(struct PluginInfo *pi)
+SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *pi)
 {
 	static TCHAR szMenu[MAX_PATH];
 	lstrcpy(szMenu, szMsgEditWrapPlugin);
@@ -125,14 +157,14 @@ void WINAPI GetPluginInfoW(struct PluginInfo *pi)
 	#endif
 }
 
-void WINAPI SetStartupInfoW(const PluginStartupInfo *aInfo)
+SHAREDSYMBOL void WINAPI SetStartupInfoW(const PluginStartupInfo *aInfo)
 {
 	::psi = *aInfo;
 	::FSF = *aInfo->FSF;
 	::psi.FSF = &::FSF;
 }
 
-void   WINAPI ExitFARW(
+SHAREDSYMBOL void   WINAPI ExitFARW(
 	#if FAR_UNICODE>=2000
 		void*
 	#else
@@ -294,10 +326,10 @@ void DoWrap(BOOL abWordWrap, EditorInfo &ei, int iMaxWidth)
 		iRc = EditCtrl(ECTL_GETSTRING, &egs);
 		if (!iRc)
 		{
-			_ASSERTE(iRc!=0);
+			//_ASSERTE(iRc!=0);
 			goto wrap;
 		}
-		_ASSERTE(egs.StringText!=NULL);
+		//_ASSERTE(egs.StringText!=NULL);
 		
 		if ((egs.StringLength <= iMaxWidth)
 			&& ((egs.StringLength <= 0) || !(egs.StringText && wcschr(egs.StringText, L'\t'))))
@@ -316,7 +348,7 @@ void DoWrap(BOOL abWordWrap, EditorInfo &ei, int iMaxWidth)
 			pszCopy = (TCHAR*)malloc(cchMax*sizeof(*pszCopy));
 			if (!pszCopy)
 			{
-				_ASSERTE(pszCopy!=NULL);
+				//_ASSERTE(pszCopy!=NULL);
 				goto wrap;
 			}
 		}
@@ -463,10 +495,10 @@ void DoUnwrap(EditorInfo &ei)
 		iRc = EditCtrl(ECTL_GETSTRING, &egs);
 		if (!iRc)
 		{
-			_ASSERTE(iRc!=0);
+			//_ASSERTE(iRc!=0);
 			goto wrap;
 		}
-		_ASSERTE(egs.StringText!=NULL);
+		//_ASSERTE(egs.StringText!=NULL);
 		
 		if (egs.StringEOL && *egs.StringEOL)
 		{
@@ -485,7 +517,7 @@ void DoUnwrap(EditorInfo &ei)
 				TCHAR* pszNew = (TCHAR*)malloc(cchMax*sizeof(*pszCopy));
 				if (!pszNew)
 				{
-					_ASSERTE(pszNew!=NULL);
+					//_ASSERTE(pszNew!=NULL);
 					goto wrap;
 				}
 				if (pszCopy)
@@ -521,10 +553,10 @@ void DoUnwrap(EditorInfo &ei)
 				iRc = EditCtrl(ECTL_GETSTRING, &egs);
 				if (!iRc)
 				{
-					_ASSERTE(iRc!=0);
+					//_ASSERTE(iRc!=0);
 					goto wrap;
 				}
-				_ASSERTE(egs.StringText!=NULL);
+				//_ASSERTE(egs.StringText!=NULL);
 				if (egs.StringEOL && *egs.StringEOL)
 				{
 					// В этой строке есть EOL, ее не сворачивали
@@ -548,10 +580,10 @@ void DoUnwrap(EditorInfo &ei)
 					eset.CurLine = i+1;
 					eset.TopScreenLine = -1;
 					iRc = EditCtrl(ECTL_SETPOSITION, &eset);
-					_ASSERTE(iRc);
+					//_ASSERTE(iRc);
 					// Удаляем "свернутое"
 					iRc = EditCtrl(ECTL_DELETESTRING, NULL);
-					_ASSERTE(iRc);
+					//_ASSERTE(iRc);
 					ei.TotalLines--;
 					if (ei.CurLine > i)
 						ei.CurLine--;
@@ -596,6 +628,10 @@ bool CheckScrollEnabled(const SMALL_RECT& rcFar)
 		return true;
 	#endif
 
+    #if 0
+    // STD_OUTPUT_HANDLE не работает
+    // fixme: потом переписать правильно
+
 	// Нет способа проверить через API, включена ли прокрутка в конкретном экземпляре редактора
 	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
@@ -611,12 +647,13 @@ bool CheckScrollEnabled(const SMALL_RECT& rcFar)
 			bScrollExists = true;
 		}
 	}
+    #endif
 
 	return bScrollExists;
 }
 #endif
 
-HANDLE WINAPI OpenPluginW(
+SHAREDSYMBOL HANDLE WINAPI OpenPluginW(
 #if FAR_UNICODE>=2000
 	OpenInfo *Info
 #else
@@ -668,14 +705,14 @@ HANDLE WINAPI OpenPluginW(
 	psi.AdvControl(PluginNumber, ACTL_GETWINDOWINFO, FADV1988 &wi);
 	if (wi.Type != WTYPE_EDITOR)
 	{
-		_ASSERTE(wi.Type != WTYPE_EDITOR);
+		//_ASSERTE(wi.Type != WTYPE_EDITOR);
 		goto wrap;
 	}
     
 	iRc = EditCtrl(ECTL_GETINFO, &ei);
 	if (!iRc)
 	{
-		_ASSERTE(iRc!=0);
+		//_ASSERTE(iRc!=0);
 		goto wrap;
 	}
 	
@@ -720,7 +757,7 @@ HANDLE WINAPI OpenPluginW(
 			}
 			else
 			{
-				_ASSERTE(pnNew!=NULL);
+				//_ASSERTE(pnNew!=NULL);
 			}
 		}
 	}
@@ -815,7 +852,7 @@ HANDLE WINAPI OpenPluginW(
 	}
 	else
 	{
-		_ASSERTE(WorkMode == fwm_Unwrap || WorkMode == fwm_Wrap || WorkMode == fwm_WordWrap);
+		//_ASSERTE(WorkMode == fwm_Unwrap || WorkMode == fwm_Wrap || WorkMode == fwm_WordWrap);
 	}
 	
 wrap:
