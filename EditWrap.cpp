@@ -1,4 +1,5 @@
-﻿#include "../../etc/plugs.h"
+﻿//#include "../../etc/plugs.h"
+#include "../far2l/far2sdk/farplug-wide.h"
 
 /*
 #include <Windows.h>
